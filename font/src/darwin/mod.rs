@@ -488,7 +488,7 @@ impl Font {
         );
 
         // Give the context a clear, black background
-        cg_context.set_rgb_fill_color(0.0, 0.0, 0.0, 0.0);
+        cg_context.set_rgb_fill_color(0.0, 0.0, 0.0, 1.0);
         let context_rect = CGRect::new(
             &CGPoint::new(0.0, 0.0),
             &CGSize::new(

@@ -30,7 +30,9 @@ void main()
         alphaMask = vec4(1.0, 1.0, 1.0, 1.0);
         color = vec4(bg + vb, bgOpacity);
     } else {
-        alphaMask = vec4(texture(mask, TexCoords).rgb, 1.0);
+        vec3 textColor = texture(mask, TexCoords).rgb;
+        //alphaMask = vec4(textColor, textColor == vec3(0.0) ? 0.0 : 1.0);
+        alphaMask = vec4(textColor, textColor.r);
         color = vec4(fg, 1.0);
     }
 }
