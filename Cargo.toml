@@ -46,8 +46,11 @@ nightly = []
 gl_generator = "0.5"
 
 [dependencies.glutin]
-git = "https://github.com/jwilm/glutin"
-rev = "cc64178d39a1fa06b2c5403117e5e0ef24deeac4"
+#version = "0.7.4"
+git = "https://github.com/mystal/glutin"
+branch = "expose_mods"
+#git = "https://github.com/jwilm/glutin"
+#rev = "cc64178d39a1fa06b2c5403117e5e0ef24deeac4"
 
 [profile.release]
 lto = true

@@ -53,6 +53,7 @@ type Result<T> = ::std::result::Result<T, Error>;
 /// Wraps the underlying windowing library to provide a stable API in Alacritty
 pub struct Window {
     glutin_window: glutin::Window,
+    events_loop: glutin::EventsLoop,
     cursor_visible: bool,
 }
 
@@ -197,11 +198,13 @@ impl Window {
     pub fn new(
         title: &str
     ) -> Result<Window> {
+        let events_loop = glutin::EventsLoop::new();
+
         /// Create a glutin::Window
         let mut window = glutin::WindowBuilder::new()
             .with_vsync()
             .with_title(title)
-            .build()?;
+            .build(&events_loop)?;
 
         /// Set the glutin window resize callback for *this* window. The
         /// function pointer must be a C-style callback. This sets such a
@@ -219,6 +222,7 @@ impl Window {
 
         Ok(Window {
             glutin_window: window,
+            events_loop: events_loop,
             cursor_visible: true,
         })
     }
@@ -273,16 +277,26 @@ impl Window {
 
     /// Poll for any available events
     #[inline]
-    pub fn poll_events(&self) -> glutin::PollEventsIterator {
-        self.glutin_window.poll_events()
+    pub fn poll_events<F>(&self, callback: F)
+        where F: FnMut(::glutin::Event)
+    {
+        self.events_loop.poll_events(callback)
     }
 
-    /// Block waiting for events
+    /// Runs forever until `interrupt()` is called.
     ///
     /// FIXME should return our own type
     #[inline]
-    pub fn wait_events(&self) -> glutin::WaitEventsIterator {
-        self.glutin_window.wait_events()
+    pub fn run_forever<F>(&self, callback: F)
+        where F: FnMut(::glutin::Event)
+    {
+        self.events_loop.run_forever(callback)
+    }
+
+    /// Block waiting for events
+    #[inline]
+    pub fn interrupt(&self) {
+        self.events_loop.interrupt()
     }
 
     /// Set the window title

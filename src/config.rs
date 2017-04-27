@@ -288,10 +288,10 @@ impl Default for Config {
 ///
 /// Our deserialize impl wouldn't be covered by a derive(Deserialize); see the
 /// impl below.
-struct ModsWrapper(::glutin::Mods);
+struct ModsWrapper(::glutin::ModifiersState);
 
 impl ModsWrapper {
-    fn into_inner(self) -> ::glutin::Mods {
+    fn into_inner(self) -> ::glutin::ModifiersState {
         self.0
     }
 }
@@ -312,14 +312,14 @@ impl de::Deserialize for ModsWrapper {
             fn visit_str<E>(self, value: &str) -> ::std::result::Result<ModsWrapper, E>
                 where E: de::Error,
             {
-                use ::glutin::{mods, Mods};
-                let mut res = Mods::empty();
+                use ::glutin::ModifiersState;
+                let mut res: ModifiersState = Default::default();
                 for modifier in value.split('|') {
                     match modifier.trim() {
-                        "Command" | "Super" => res |= mods::SUPER,
-                        "Shift" => res |= mods::SHIFT,
-                        "Alt" | "Option" => res |= mods::ALT,
-                        "Control" => res |= mods::CONTROL,
+                        "Command" | "Super" => res.logo = true,
+                        "Shift" => res.shift = true,
+                        "Alt" | "Option" => res.alt = true,
+                        "Control" => res.ctrl = true,
                         _ => err_println!("unknown modifier {:?}", modifier),
                     }
                 }
@@ -462,7 +462,7 @@ impl de::Deserialize for MouseButton {
 struct RawBinding {
     key: Option<::glutin::VirtualKeyCode>,
     mouse: Option<::glutin::MouseButton>,
-    mods: ::glutin::Mods,
+    mods: ::glutin::ModifiersState,
     mode: TermMode,
     notmode: TermMode,
     action: Action,
@@ -561,7 +561,7 @@ impl de::Deserialize for RawBinding {
             ) -> ::std::result::Result<RawBinding, V::Error>
                 where V: MapVisitor,
             {
-                let mut mods: Option<::glutin::Mods> = None;
+                let mut mods: Option<::glutin::ModifiersState> = None;
                 let mut key: Option<::glutin::VirtualKeyCode> = None;
                 let mut chars: Option<String> = None;
                 let mut action: Option<::input::Action> = None;
@@ -632,7 +632,7 @@ impl de::Deserialize for RawBinding {
 
                 let mode = mode.unwrap_or_else(TermMode::empty);
                 let not_mode = not_mode.unwrap_or_else(TermMode::empty);
-                let mods = mods.unwrap_or_else(::glutin::Mods::empty);
+                let mods = mods.unwrap_or_else(Default::default);
 
                 if mouse.is_none() && key.is_none() {
                     return Err(V::Error::custom("bindings require mouse button or key"));

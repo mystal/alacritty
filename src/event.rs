@@ -190,13 +190,13 @@ impl<N: Notify> Processor<N> {
     /// Doesn't take self mutably due to borrow checking. Kinda uggo but w/e.
     fn handle_event<'a>(
         processor: &mut input::Processor<'a, ActionContext<'a, N>>,
-        event: glutin::Event,
+        event: glutin::WindowEvent,
         ref_test: bool,
         resize_tx: &mpsc::Sender<(u32, u32)>,
         hide_cursor: &mut bool,
     ) {
         match event {
-            glutin::Event::Closed => {
+            glutin::WindowEvent::Closed => {
                 if ref_test {
                     // dump grid state
                     let grid = processor.ctx.terminal.grid();
@@ -219,11 +219,11 @@ impl<N: Notify> Processor<N> {
                 // FIXME should do a more graceful shutdown
                 ::std::process::exit(0);
             },
-            glutin::Event::Resized(w, h) => {
+            glutin::WindowEvent::Resized(w, h) => {
                 resize_tx.send((w, h)).expect("send new size");
                 processor.ctx.terminal.dirty = true;
             },
-            glutin::Event::KeyboardInput(state, _code, key, mods, string) => {
+            glutin::WindowEvent::KeyboardInput(state, _code, key, mods, string) => {
                 // Ensure that key event originates from our window. For example using a shortcut
                 // to switch windows could generate a release key event.
                 if state == ElementState::Pressed {
@@ -231,12 +231,12 @@ impl<N: Notify> Processor<N> {
                 }
                 processor.process_key(state, key, mods, string);
             },
-            glutin::Event::MouseInput(state, button) => {
+            glutin::WindowEvent::MouseInput(state, button) => {
                 *hide_cursor = false;
                 processor.mouse_input(state, button);
                 processor.ctx.terminal.dirty = true;
             },
-            glutin::Event::MouseMoved(x, y) => {
+            glutin::WindowEvent::MouseMoved(x, y) => {
                 let x = limit(x, 0, processor.ctx.size_info.width as i32);
                 let y = limit(y, 0, processor.ctx.size_info.height as i32);
 
@@ -247,16 +247,16 @@ impl<N: Notify> Processor<N> {
                     processor.ctx.terminal.dirty = true;
                 }
             },
-            glutin::Event::MouseWheel(scroll_delta, touch_phase) => {
+            glutin::WindowEvent::MouseWheel(scroll_delta, touch_phase) => {
                 *hide_cursor = false;
                 processor.on_mouse_wheel(scroll_delta, touch_phase);
             },
-            glutin::Event::Focused(true) |
-            glutin::Event::Refresh |
-            glutin::Event::Awakened => {
+            glutin::WindowEvent::Focused(true) |
+            glutin::WindowEvent::Refresh |
+            glutin::WindowEvent::Awakened => {
                 processor.ctx.terminal.dirty = true;
             },
-            glutin::Event::Focused(false) => {
+            glutin::WindowEvent::Focused(false) => {
                 *hide_cursor = false;
             },
             _ => (),
@@ -286,21 +286,26 @@ impl<N: Notify> Processor<N> {
                     if self.print_events {
                         println!("glutin event: {:?}", $event);
                     }
-                    Processor::handle_event(
-                        &mut processor,
-                        $event,
-                        self.ref_test,
-                        &self.resize_tx,
-                        &mut self.hide_cursor,
-                    )
+                    match $event {
+                        glutin::Event::WindowEvent { event, .. } =>
+                            Processor::handle_event(
+                                &mut processor,
+                                event,
+                                self.ref_test,
+                                &self.resize_tx,
+                                &mut self.hide_cursor,
+                            ),
+                    }
                 }
             }
 
-            let event = if self.wait_for_event {
-                window.wait_events().next()
-            } else {
-                None
-            };
+            let mut event = None;
+            if self.wait_for_event {
+                window.run_forever(|e| {
+                    event = Some(e);
+                    window.interrupt();
+                });
+            }
 
             terminal = term.lock();
 
@@ -323,9 +328,9 @@ impl<N: Notify> Processor<N> {
                 process!(event);
             }
 
-            for event in window.poll_events() {
+            window.poll_events(|event| {
                 process!(event);
-            }
+            });
 
             if self.hide_cursor_when_typing {
                 window.set_cursor_visible(!self.hide_cursor);
