@@ -691,9 +691,9 @@ impl<'a> RenderApi<'a> {
         let alpha = self.config.background_opacity().get();
         unsafe {
             gl::ClearColor(
-                (self.visual_bell_intensity + color.r as f32 / 255.0).min(1.0),
-                (self.visual_bell_intensity + color.g as f32 / 255.0).min(1.0),
-                (self.visual_bell_intensity + color.b as f32 / 255.0).min(1.0),
+                (self.visual_bell_intensity + color.r as f32 / 255.0).min(1.0) * alpha,
+                (self.visual_bell_intensity + color.g as f32 / 255.0).min(1.0) * alpha,
+                (self.visual_bell_intensity + color.b as f32 / 255.0).min(1.0) * alpha,
                 alpha
                 );
             gl::Clear(gl::COLOR_BUFFER_BIT);
