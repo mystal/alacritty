@@ -226,19 +226,14 @@ impl FreeTypeRasterizer {
         use freetype::bitmap::PixelMode;
 
         let buf = bitmap.buffer();
-        let mut packed = Vec::with_capacity((bitmap.rows() * (bitmap.width() / 3 * 4)) as usize);
+        let mut packed = Vec::with_capacity((bitmap.rows() * bitmap.width()) as usize);
         let pitch = bitmap.pitch().abs() as usize;
         match bitmap.pixel_mode()? {
             PixelMode::Lcd => {
-                for y in 0..bitmap.rows() {
-                    // TODO: Look into using a range that counts by 3.
-                    for x in 0..(bitmap.width() / 3) {
-                        let start = (y as usize) * pitch + (x as usize) * 3;
-                        let stop = start + 3;
-                        //let stop = start + bitmap.width() as usize;
-                        packed.extend_from_slice(&buf[start..stop]);
-                        packed.push(0xff);
-                    }
+                for i in 0..bitmap.rows() {
+                    let start = (i as usize) * pitch;
+                    let stop = start + bitmap.width() as usize;
+                    packed.extend_from_slice(&buf[start..stop]);
                 }
                 Ok((bitmap.width() / 3, packed))
             },
@@ -254,8 +249,6 @@ impl FreeTypeRasterizer {
                         res.push(value);
                         res.push(value);
                         res.push(value);
-                        // Alpha
-                        res.push(0xff);
                         count -= 1;
                         bit -= 1;
                     }
@@ -284,8 +277,6 @@ impl FreeTypeRasterizer {
                         packed.push(*byte);
                         packed.push(*byte);
                         packed.push(*byte);
-                        // Alpha
-                        packed.push(0xff);
                     }
                 }
                 Ok((bitmap.width(), packed))

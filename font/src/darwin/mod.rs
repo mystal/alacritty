@@ -46,7 +46,7 @@ use super::{FontDesc, RasterizedGlyph, Metrics, FontKey, GlyphKey};
 
 pub mod byte_order;
 use self::byte_order::kCGBitmapByteOrder32Host;
-use self::byte_order::extract_rgba;
+use self::byte_order::extract_rgb;
 
 use super::Size;
 
@@ -525,7 +525,7 @@ impl Font {
 
         let rasterized_pixels = cg_context.data().to_vec();
 
-        let buf = extract_rgba(rasterized_pixels);
+        let buf = extract_rgb(rasterized_pixels);
 
         Ok(RasterizedGlyph {
             c: character,

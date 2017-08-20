@@ -1234,11 +1234,11 @@ impl Atlas {
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
-                gl::RGBA as i32,
+                gl::RGB as i32,
                 size,
                 size,
                 0,
-                gl::RGBA,
+                gl::RGB,
                 gl::UNSIGNED_BYTE,
                 ptr::null()
             );
@@ -1307,7 +1307,7 @@ impl Atlas {
                 offset_y,
                 width,
                 height,
-                gl::RGBA,
+                gl::RGB,
                 gl::UNSIGNED_BYTE,
                 glyph.buf.as_ptr() as *const _
             );
